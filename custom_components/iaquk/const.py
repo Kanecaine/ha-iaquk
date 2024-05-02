@@ -83,7 +83,7 @@ UNIT_MGM3: Final = {
     "µg/m^3": 0.001,
 }
 
-MWEIGTH_TVOC: Final = 100  # g/mol
+MWEIGTH_TVOC: Final = 78.9516  # g/mol
 MWEIGTH_HCHO: Final = 30.0260  # g/mol
 MWEIGTH_CO: Final = 28.0100  # g/mol
 MWEIGTH_NO2: Final = 46.0100  # g/mol

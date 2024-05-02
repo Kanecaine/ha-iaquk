@@ -1,6 +1,6 @@
 """Test integration setup process."""
 # pylint: disable=redefined-outer-name,protected-access
-
+import pytest
 from pytest import raises
 from pytest_homeassistant_custom_component.common import assert_setup_component
 from voluptuous import Invalid
@@ -26,6 +26,11 @@ from custom_components.iaquk import (
     LEVEL_GOOD,
     LEVEL_INADEQUATE,
     LEVEL_POOR,
+    MWEIGTH_CO,
+    MWEIGTH_CO2,
+    MWEIGTH_HCHO,
+    MWEIGTH_NO2,
+    MWEIGTH_TVOC,
     Iaquk,
     _deslugify,
     check_voc_keys,
@@ -230,7 +235,10 @@ async def test__get_number_state(hass: HomeAssistant):
 
     assert controller._get_number_state(entity_id) == 29.82
     assert controller._get_number_state(entity_id, "") is None
-    assert round(controller._get_number_state(entity_id, "", mweight=1), 2) == 729.10
+    assert (
+        pytest.approx(controller._get_number_state(entity_id, "", mweight=1), 0.01)
+        == 729.10
+    )
     assert controller._get_number_state(entity_id, "ppb", mweight=1) == 729099
 
     hass.states.async_set(entity_id, STATE_UNKNOWN)
@@ -239,7 +247,37 @@ async def test__get_number_state(hass: HomeAssistant):
 
     hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
     #
-    assert round(controller._get_number_state(entity_id, "", mweight=10), 2) == 5.11
+    for mw, res in {
+        10: 5.110,
+        MWEIGTH_CO: 14.320,
+        MWEIGTH_CO2: 22.500,
+        MWEIGTH_HCHO: 15.351,
+        MWEIGTH_NO2: 23.522,
+        MWEIGTH_TVOC: 40.364,
+    }.items():
+        assert (
+            pytest.approx(
+                controller._get_number_state(entity_id, "mg/m³", mweight=mw), 0.001
+            )
+            == res
+        )
+
+    hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "mg/m³"})
+    #
+    for mw, res in {
+        10: 30.560,
+        MWEIGTH_CO: 10.911,
+        MWEIGTH_CO2: 6.944,
+        MWEIGTH_HCHO: 10.179,
+        MWEIGTH_NO2: 6.643,
+        MWEIGTH_TVOC: 3.871,
+    }.items():
+        assert (
+            pytest.approx(
+                controller._get_number_state(entity_id, "ppm", mweight=mw), 0.001
+            )
+            == res
+        )
 
 
 async def test__temperature_index(hass: HomeAssistant):
@@ -332,11 +370,11 @@ async def test__tvoc_index(hass: HomeAssistant):
 
     controller = Iaquk(hass, "test", "Test", {CONF_TVOC: entity_id})
 
-    for i, value in enumerate([1.01, 1.0, 0.49, 0.29, 0.09]):
+    for i, value in enumerate([0.792, 0.791, 0.393, 0.235, 0.077]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._tvoc_index == i + 1
 
-    for i, value in enumerate([1.01, 0.5, 0.3, 0.1, 0.09]):
+    for i, value in enumerate([0.792, 0.394, 0.236, 0.078, 0.077]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._tvoc_index == i + 1
 
