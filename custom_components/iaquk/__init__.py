@@ -25,7 +25,7 @@ from homeassistant.const import (
 from homeassistant.core import State, callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.event import async_track_state_change
+from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.util.unit_conversion import TemperatureConverter
 
 from .const import (
@@ -198,7 +198,7 @@ class Iaquk:
                 ", ".join(entity_ids),
             )
 
-            async_track_state_change(self.hass, entity_ids, sensor_state_listener)
+            async_track_state_change_event(self.hass, entity_ids, sensor_state_listener)
             sensor_state_listener(None, None, None)  # Force first update
 
         if not self._added:
