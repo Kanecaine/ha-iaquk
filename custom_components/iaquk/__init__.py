@@ -22,7 +22,7 @@ from homeassistant.const import (
     UNIT_NOT_RECOGNIZED_TEMPLATE,
     UnitOfTemperature,
 )
-from homeassistant.core import State, callback
+from homeassistant.core import Event, EventStateChangedData, State, callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.event import async_track_state_change_event
@@ -177,7 +177,7 @@ class Iaquk:
 
         # pylint: disable=unused-argument
         @callback
-        def sensor_state_listener(entity, old_state, new_state):
+        def sensor_state_listener(event: Event[EventStateChangedData]) -> None:
             """Handle device state changes."""
             self.update()
 
@@ -199,7 +199,7 @@ class Iaquk:
             )
 
             async_track_state_change_event(self.hass, entity_ids, sensor_state_listener)
-            sensor_state_listener(None, None, None)  # Force first update
+            self.update()  # Force first update
 
         if not self._added:
             self._added = True
