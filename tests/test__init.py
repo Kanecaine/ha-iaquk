@@ -31,10 +31,12 @@ from custom_components.iaquk import (
     MWEIGTH_HCHO,
     MWEIGTH_NO2,
     MWEIGTH_TVOC,
+    UNIT_PPM,
     Iaquk,
     _deslugify,
     check_voc_keys,
 )
+from custom_components.iaquk.const import UNIT_MGM3, UNIT_PPB, UNIT_UGM3
 from homeassistant.const import (
     ATTR_UNIT_OF_MEASUREMENT,
     PERCENTAGE,
@@ -239,7 +241,7 @@ async def test__get_number_state(hass: HomeAssistant):
         pytest.approx(controller._get_number_state(entity_id, "", mweight=1), 0.01)
         == 729.10
     )
-    assert controller._get_number_state(entity_id, "ppb", mweight=1) == 729099
+    assert controller._get_number_state(entity_id, UNIT_PPB, mweight=1) == 729099
 
     hass.states.async_set(entity_id, STATE_UNKNOWN)
     #
@@ -248,7 +250,7 @@ async def test__get_number_state(hass: HomeAssistant):
     hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
     #
     for mw, res in {
-        10: 5.110,
+        10: 5.112,
         MWEIGTH_CO: 14.320,
         MWEIGTH_CO2: 22.500,
         MWEIGTH_HCHO: 15.351,
@@ -257,9 +259,15 @@ async def test__get_number_state(hass: HomeAssistant):
     }.items():
         assert (
             pytest.approx(
-                controller._get_number_state(entity_id, "mg/m³", mweight=mw), 0.001
+                controller._get_number_state(entity_id, UNIT_MGM3, mweight=mw), 0.001
             )
             == res
+        )
+        assert (
+            pytest.approx(
+                controller._get_number_state(entity_id, UNIT_UGM3, mweight=mw), 0.001
+            )
+            == res * 1000
         )
 
     hass.states.async_set(entity_id, 12.5, {ATTR_UNIT_OF_MEASUREMENT: "mg/m³"})
@@ -274,9 +282,33 @@ async def test__get_number_state(hass: HomeAssistant):
     }.items():
         assert (
             pytest.approx(
-                controller._get_number_state(entity_id, "ppm", mweight=mw), 0.001
+                controller._get_number_state(entity_id, UNIT_PPM, mweight=mw), 0.001
             )
             == res
+        )
+        assert (
+            pytest.approx(
+                controller._get_number_state(entity_id, UNIT_PPB, mweight=mw), 0.001
+            )
+            == res * 1000
+        )
+
+    for tval, tunit, esval, esunit in [
+        (12.5, "ppb", 0.0125, UNIT_PPM),
+        (12.5, "ppm", 12500, UNIT_PPB),
+        (12.5, "µg/m3", 12.5, UNIT_UGM3),
+        (12.5, "ug/m³", 12.5, UNIT_UGM3),
+        (12.5, "mg/m³", 12500, UNIT_UGM3),
+        (12.5, "mg/m^3", 12500, UNIT_UGM3),
+        (12.5, "mg/m^3", 12.5, UNIT_MGM3),
+        (12.5, "µg/m³", 0.0125, UNIT_MGM3),
+        (12.5, "µg/m3", 0.0125, UNIT_MGM3),
+        (12.5, "ug/m³", 0.0125, UNIT_MGM3),
+    ]:
+        hass.states.async_set(entity_id, tval, {ATTR_UNIT_OF_MEASUREMENT: tunit})
+        assert (
+            pytest.approx(controller._get_number_state(entity_id, esunit), 0.001)
+            == esval
         )
 
 
@@ -345,11 +377,11 @@ async def test__co2_index(hass: HomeAssistant):
 
     controller = Iaquk(hass, "test", "Test", {CONF_CO2: entity_id})
 
-    for i, value in enumerate([1801, 1800, 1500, 800, 600]):
+    for i, value in enumerate([1801, 1800, 1500, 800, 599]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
         assert controller._co2_index == i + 1
 
-    for i, value in enumerate([1801, 1501, 801, 601, 600]):
+    for i, value in enumerate([1801, 1501, 801, 600, 599]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "ppm"})
         assert controller._co2_index == i + 1
 
@@ -370,11 +402,11 @@ async def test__tvoc_index(hass: HomeAssistant):
 
     controller = Iaquk(hass, "test", "Test", {CONF_TVOC: entity_id})
 
-    for i, value in enumerate([0.792, 0.791, 0.393, 0.235, 0.077]):
+    for i, value in enumerate([1.01, 1.0, 0.5, 0.3, 0.09]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._tvoc_index == i + 1
 
-    for i, value in enumerate([0.792, 0.394, 0.236, 0.078, 0.077]):
+    for i, value in enumerate([1.01, 0.51, 0.31, 0.1, 0.09]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._tvoc_index == i + 1
 
@@ -473,11 +505,11 @@ async def test__co_index(hass: HomeAssistant):
 
     controller = Iaquk(hass, "test", "Test", {CONF_CO: entity_id})
 
-    for i, value in enumerate([7.1, 7, 0.9]):
+    for i, value in enumerate([7.1, 7, 0]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._co_index == i * 2 + 1
 
-    hass.states.async_set(entity_id, 1, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
+    hass.states.async_set(entity_id, 0.1, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
     assert controller._co_index == 3
 
 
@@ -504,6 +536,9 @@ async def test__hcho_index(hass: HomeAssistant):
     for i, value in enumerate([0.201, 0.101, 0.051, 0.02, 0.019]):
         hass.states.async_set(entity_id, value, {ATTR_UNIT_OF_MEASUREMENT: "mg/m3"})
         assert controller._hcho_index == i + 1
+
+    hass.states.async_set(entity_id, 4, {ATTR_UNIT_OF_MEASUREMENT: "µg/m³"})
+    assert controller._hcho_index == 5
 
 
 async def test__radon_index(hass: HomeAssistant):

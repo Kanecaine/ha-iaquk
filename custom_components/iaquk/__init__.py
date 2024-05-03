@@ -55,7 +55,7 @@ from .const import (
     MWEIGTH_NO2,
     MWEIGTH_TVOC,
     STARTUP_MESSAGE,
-    UNIT_PPB,
+    UNIT_MGM3,
     UNIT_PPM,
     UNIT_UGM3,
 )
@@ -331,6 +331,8 @@ class Iaquk:
                 entity_unit = entity_unit.copy()
                 if "ppb" in (unit, target_unit):
                     mweight /= 1000
+                if "µg/m³" in (unit, target_unit):
+                    mweight *= 1000
                 if unit in {"ppm", "ppb"}:
                     entity_unit[unit] = mweight / 24.45
                 else:
@@ -419,7 +421,7 @@ class Iaquk:
             return None
 
         index = 1
-        if value <= 600:  # ppm
+        if value < 600:  # ppm
             index = 5
         elif value <= 800:  # ppm
             index = 4
@@ -437,19 +439,19 @@ class Iaquk:
             return None
 
         value = self._get_number_state(
-            entity_id, UNIT_PPB, CONF_TVOC, mweight=MWEIGTH_TVOC
+            entity_id, UNIT_MGM3, CONF_TVOC, mweight=MWEIGTH_TVOC
         )
         if value is None:
             return None
 
         index = 1
-        if value <= 24:  # ppb
+        if value < 0.1:  # mg/m³
             index = 5
-        elif value <= 73:  # ppb
+        elif value <= 0.3:  # mg/m³
             index = 4
-        elif value <= 122:  # ppb
+        elif value <= 0.5:  # mg/m³
             index = 3
-        elif value <= 245:  # ppb
+        elif value <= 1.0:  # mg/m³
             index = 2
         return index
 
@@ -521,15 +523,15 @@ class Iaquk:
             return None
 
         value = self._get_number_state(
-            entity_id, UNIT_PPB, CONF_NO2, mweight=MWEIGTH_NO2
+            entity_id, UNIT_MGM3, CONF_NO2, mweight=MWEIGTH_NO2
         )
         if value is None:
             return None
 
         index = 1
-        if value <= 106:  # ppb
+        if value < 0.2:  # mg/m³
             index = 5
-        elif value <= 213:  # ppb
+        elif value <= 0.4:  # mg/m³
             index = 3
         return index
 
@@ -540,14 +542,16 @@ class Iaquk:
         if entity_id is None:
             return None
 
-        value = self._get_number_state(entity_id, UNIT_PPB, CONF_CO, mweight=MWEIGTH_CO)
+        value = self._get_number_state(
+            entity_id, UNIT_MGM3, CONF_CO, mweight=MWEIGTH_CO
+        )
         if value is None:
             return None
 
         index = 1
-        if value <= 785.7:  # ppb
+        if value == 0:  # mg/m³
             index = 5
-        elif value <= 6111:  # ppb
+        elif value <= 7:  # mg/m³
             index = 3
         return index
 
@@ -559,19 +563,19 @@ class Iaquk:
             return None
 
         value = self._get_number_state(
-            entity_id, UNIT_PPB, CONF_HCHO, mweight=MWEIGTH_HCHO
+            entity_id, UNIT_UGM3, CONF_HCHO, mweight=MWEIGTH_HCHO
         )
         if value is None:
             return None
 
         index = 1
-        if value <= 16:  # ppb
+        if value < 20:  # µg/m³
             index = 5
-        elif value <= 41:  # ppb
+        elif value <= 50:  # µg/m³
             index = 4
-        elif value <= 82:  # ppb
+        elif value <= 100:  # µg/m³
             index = 3
-        elif value <= 163:  # ppb
+        elif value <= 200:  # µg/m³
             index = 2
         return index
 
