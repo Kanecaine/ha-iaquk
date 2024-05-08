@@ -1,4 +1,5 @@
 """Constants for calculate IAQ UK index."""
+
 from typing import Final
 
 from homeassistant.components.sensor import DOMAIN as SENSOR
@@ -6,7 +7,7 @@ from homeassistant.components.sensor import DOMAIN as SENSOR
 # Base component constants
 NAME: Final = "Indoor Air Quality UK Index"
 DOMAIN: Final = "iaquk"
-VERSION: Final = "1.6.9"
+VERSION: Final = "1.6.10-alpha"
 ISSUE_URL: Final = "https://github.com/Limych/ha-iaquk/issues"
 
 STARTUP_MESSAGE: Final = f"""
