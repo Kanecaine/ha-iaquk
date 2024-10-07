@@ -34,6 +34,14 @@ BINARY_SENSOR_DEVICE_CLASS: Final = "connectivity"
 # Platforms
 PLATFORMS: Final = [SENSOR]
 
+SENSOR_INDEX: Final = "iaq_index"
+SENSOR_LEVEL: Final = "iaq_level"
+
+SENSORS: Final = {
+    SENSOR_INDEX: "Indoor Air Quality Index",
+    SENSOR_LEVEL: "Indoor Air Quality Level",
+}
+
 # Configuration and options
 CONF_SOURCES: Final = "sources"
 CONF_TEMPERATURE: Final = "temperature"

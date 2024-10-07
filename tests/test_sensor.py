@@ -1,9 +1,12 @@
 """Test sensor setup."""
+
 from unittest.mock import patch
 
+from homeassistant.core import HomeAssistant
+from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import assert_setup_component
 
-from custom_components.iaquk import Iaquk
+from custom_components.iaquk import IaqukController
 from custom_components.iaquk.const import (
     DOMAIN,
     ICON_DEFAULT,
@@ -19,13 +22,11 @@ from custom_components.iaquk.const import (
     LEVEL_POOR,
 )
 from custom_components.iaquk.sensor import SENSOR_INDEX, SENSOR_LEVEL, IaqukSensor
-from homeassistant.core import HomeAssistant
-from homeassistant.setup import async_setup_component
 
 
 async def test_entity_initialization(hass: HomeAssistant):
     """Test sensor initialization."""
-    controller = Iaquk(hass, "test", "Test", {"": "sensor.test_monitored"})
+    controller = IaqukController(hass, "test", "Test", {"": "sensor.test_monitored"})
     expected_attributes = {"sources_set": 1, "sources_used": 0}
 
     entity = IaqukSensor(controller, SENSOR_INDEX)
@@ -63,9 +64,10 @@ async def test_entity_initialization(hass: HomeAssistant):
     }
 
     for lvl, icon in levels.items():
-        # pylint: disable=cell-var-from-loop
-        with patch.object(Iaquk, "iaq_level", new_callable=lambda: lvl):
-            controller = Iaquk(hass, "test", "Test", {"": "sensor.test_monitored"})
+        with patch.object(IaqukController, "iaq_level", new_callable=lambda: lvl):  # noqa: B023
+            controller = IaqukController(
+                hass, "test", "Test", {"": "sensor.test_monitored"}
+            )
             entity = IaqukSensor(controller, SENSOR_LEVEL)
             entity.hass = hass
             await entity.async_update()
