@@ -6,6 +6,7 @@ from typing import Any, Final
 
 from homeassistant.components.sensor import (
     ENTITY_ID_FORMAT,
+    SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
@@ -76,10 +77,7 @@ class IaqukSensor(SensorEntity):
             SensorStateClass.MEASUREMENT if sensor_type == SENSOR_INDEX else None
         )
         self._attr_device_class = (
-            f"{DOMAIN}__level" if sensor_type == SENSOR_LEVEL else None
-        )
-        self._attr_native_unit_of_measurement = (
-            "IAQI" if sensor_type == SENSOR_INDEX else None
+            f"{DOMAIN}__level" if sensor_type == SENSOR_LEVEL else SensorDeviceClass.AQI
         )
         self._attr_icon = ICON_DEFAULT if sensor_type == SENSOR_INDEX else ICON_FAIR
 

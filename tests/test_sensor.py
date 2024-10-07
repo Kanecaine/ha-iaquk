@@ -2,6 +2,7 @@
 
 from unittest.mock import patch
 
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.setup import async_setup_component
 from pytest_homeassistant_custom_component.common import assert_setup_component
@@ -36,10 +37,11 @@ async def test_entity_initialization(hass: HomeAssistant):
     assert entity.name == "Test Indoor Air Quality Index"
     assert entity.should_poll is True
     assert entity.available is True
+    assert entity.device_class == SensorDeviceClass.AQI
     assert entity.state is None
-    assert entity.state_class == "measurement"
+    assert entity.state_class == SensorStateClass.MEASUREMENT
     assert entity.icon == ICON_DEFAULT
-    assert entity.unit_of_measurement == "IAQI"
+    assert entity.unit_of_measurement is None
     assert entity.extra_state_attributes == expected_attributes
 
     entity = IaqukSensor(controller, SENSOR_LEVEL)
@@ -49,6 +51,7 @@ async def test_entity_initialization(hass: HomeAssistant):
     assert entity.name == "Test Indoor Air Quality Level"
     assert entity.should_poll is True
     assert entity.available is True
+    assert entity.device_class == "iaquk__level"
     assert entity.state is None
     assert entity.state_class is None
     assert entity.icon == ICON_FAIR
